@@ -40,8 +40,15 @@ func newOfCmd() *cobra.Command {
 				mth, _ = strconv.Atoi(args[1])
 			}
 
+			//parse yy or yyyy
 			if len(args) >= 3 {
-				yr, _ = strconv.Atoi(args[2])
+				if len(args[2]) == 4 {
+					yr, _ = strconv.Atoi(args[2])
+				}
+				if len(args[2]) == 2 {
+					yr, _ = strconv.Atoi("20" + args[2])
+				}
+				//else silent use current yr
 			}
 
 			target := time.Date(yr, time.Month(mth), day, 0, 0, 0, 0, time.UTC)
@@ -49,8 +56,10 @@ func newOfCmd() *cobra.Command {
 			_, iweek := isoweek.FromDate(target.Year(), target.Month(), target.Day())
 			startYr, startMth, _ := isoweek.StartDate(today.Year(), iweek)
 			wd := isoweek.ISOWeekday(startYr, startMth, day)
-			fmt.Printf("%02dw%02d\n", yr, iweek)
-			fmt.Printf("%02dw%02d-%d\n", yr, iweek, wd)
+			shortYr := target.Format("06") // Last two digits of year
+
+			fmt.Printf("%sw%02d\n", shortYr, iweek)
+			fmt.Printf("%sw%02d-%d\n", shortYr, iweek, wd)
 			return nil
 		},
 	}
