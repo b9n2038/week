@@ -33,9 +33,12 @@ func newOfCmd() *cobra.Command {
 			fmt.Printf("todo parse the dd mm yy\n")
 
 			today := time.Now()
-			day, _ := strconv.Atoi(args[0])
+			day := int(today.Day())
 			mth := int(today.Month())
 			yr := today.Year()
+			if len(args) >= 1 {
+				day, _ = strconv.Atoi(args[0])
+			}
 			if len(args) >= 2 {
 				mth, _ = strconv.Atoi(args[1])
 			}
@@ -58,6 +61,7 @@ func newOfCmd() *cobra.Command {
 			wd := isoweek.ISOWeekday(startYr, startMth, day)
 			shortYr := target.Format("06") // Last two digits of year
 
+			//todo: check long flag format
 			fmt.Printf("%sw%02d\n", shortYr, iweek)
 			fmt.Printf("%sw%02d-%d\n", shortYr, iweek, wd)
 			return nil
