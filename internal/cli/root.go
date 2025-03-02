@@ -21,12 +21,16 @@ func NewRootCmd() *cobra.Command {
 	return rootCmd
 }
 
+var (
+	formatWithWeekday bool
+)
+
 // func parseArgs = (args[] string) string {
 // return ""
 // }
 // fzf version maybe way better
 func newOfCmd() *cobra.Command {
-	toCmd := &cobra.Command{
+	ofCmd := &cobra.Command{
 		Use:   "of",
 		Short: "translate a date dd [MM] [yy[yyyy]] format into ISOWeek and day.",
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -62,12 +66,16 @@ func newOfCmd() *cobra.Command {
 			shortYr := target.Format("06") // Last two digits of year
 
 			//todo: check long flag format
-			fmt.Printf("%sw%02d\n", shortYr, iweek)
-			fmt.Printf("%sw%02d-%d\n", shortYr, iweek, wd)
+			if formatWithWeekday {
+				fmt.Printf("%sw%02d-%d\n", shortYr, iweek, wd)
+			} else {
+				fmt.Printf("%sw%02d\n", shortYr, iweek)
+			}
 			return nil
 		},
 	}
-	return toCmd
+	ofCmd.Flags().BoolVarP(&formatWithWeekday, "weekday", "w", false, "Format with weekday")
+	return ofCmd
 }
 func newToCmd() *cobra.Command {
 	toCmd := &cobra.Command{
