@@ -2,8 +2,8 @@ package cli
 
 import (
 	"fmt"
-	"github.com/snabb/isoweek"
 	"github.com/spf13/cobra"
+	"math"
 	"strconv"
 	"time"
 )
@@ -58,24 +58,16 @@ func newOfCmd() *cobra.Command {
 				//else silent use current yr
 			}
 
+			// fmt.Printf("target yr %d, %d, %d\n", yr, mth, day)
 			target := time.Date(yr, time.Month(mth), day, 0, 0, 0, 0, time.UTC)
 
-			//1 1 27 works, but 1 1 has 24 wk01 as yr, not 25w53 if thats what it is meant to be
-			// fmt.Printf("target yr %d, %d, %d\n", yr, mth, day)
-			fromYr, fromWeek := isoweek.FromDate(target.Year(), target.Month(), target.Day())
-			// fmt.Printf("fromYr %d, %d\n", fromYr, fromWeek)
-			//to get the weekday, need more conversion
-			startYr, startMth, _ := isoweek.StartDate(fromYr, fromWeek)
-			// fmt.Printf("start yr %d, %d \n", startYr, startMth)
-			wd := isoweek.ISOWeekday(startYr, startMth, day)
-			// shortYr := startYr.Format("06") // Last two digits of year
-			// fmt.Printf("weekday %d,\n", wd)
-
-			//todo: check long flag format
+			startYr, fromWeek := target.ISOWeek()
+			// fmt.Printf("yr %v, %d \n", startYr, fromWeek)
+			wd := target.Weekday()
 			if formatWithWeekday {
-				fmt.Printf("%02dw%02d-%d\n", startYr%1000, fromWeek, wd)
+				fmt.Printf("%02dw%02d-%d", startYr%1000, fromWeek, wd)
 			} else {
-				fmt.Printf("%02dw%02d\n", startYr%1000, fromWeek)
+				fmt.Printf("%02dw%02d", startYr%1000, fromWeek)
 			}
 			return nil
 		},
@@ -88,16 +80,42 @@ func newToCmd() *cobra.Command {
 		Use:   "to",
 		Short: "weeks to an ISOWeek",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			//parse the target date
-			target := time.Now()
-			yr := target.Format("06")
-			_, iweek := isoweek.FromDate(target.Year(), target.Month(), target.Day())
+			today := time.Now()
+			day := int(today.Day())
+			mth := int(today.Month())
+			yr := today.Year()
+			if len(args) >= 1 {
+				day, _ = strconv.Atoi(args[0])
+			}
+			if len(args) >= 2 {
+				mth, _ = strconv.Atoi(args[1])
+			}
+
+			//parse yy or yyyy
+			if len(args) >= 3 {
+				if len(args[2]) == 4 {
+					yr, _ = strconv.Atoi(args[2])
+				}
+				if len(args[2]) <= 2 {
+					yr, _ = strconv.Atoi(args[2])
+					yr = 2000 + yr
+				}
+				//else silent use current yr
+			}
+
+			// fmt.Printf("target yr %d, %d, %d\n", yr, mth, day)
+			target := time.Date(yr, time.Month(mth), day, 0, 0, 0, 0, time.UTC)
+
+			targetYr, targetWeek := target.ISOWeek() //isoweek.FromDate(target.Year(), target.Month(), target.Day())
 
 			//parse the from date
-			diff := target.Sub(time.Now())
-			weekDiff := diff.Hours() / 24 / 7
+			diff := time.Until(target)
+			// fmt.Printf("%v\n", diff.Hours())
+			hoursDiff := diff.Round(time.Hour)
+			// fmt.Printf("%v\n", hoursDiff)
 
-			fmt.Printf("%sw%02d\n", yr, iweek, weekDiff)
+			weekDiff := int(math.Trunc(hoursDiff.Hours() / 24 / 7))
+			fmt.Printf("%d weeks to %vw%02d", weekDiff, targetYr, targetWeek)
 			return nil
 		},
 	}
